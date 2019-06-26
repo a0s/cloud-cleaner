@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    chronic (0.10.2)
+    excon (0.64.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  chronic
+  excon
+
+BUNDLED WITH
+   1.17.2
