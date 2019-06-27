@@ -12,7 +12,7 @@ Usage: services [options]
                                      Exclude name from deletion process
 ```
 
-##Examples
+## Examples
 
 Dry-run to show what will be delete
 
