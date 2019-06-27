@@ -1,3 +1,5 @@
+require 'chronic'
+
 OptionParser.accept(Chronic) do |s,|
   begin
     Chronic.parse(s) if s

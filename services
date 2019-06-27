@@ -2,79 +2,24 @@
 $LOAD_PATH.unshift File.expand_path(File.join(__FILE__, %w(..)))
 
 require 'optparse'
-require 'chronic'
+require 'optparse/uri'
 require 'lib/option_parser/chronic'
 require 'lib/uri/generic'
-require 'excon'
-require 'json'
+require 'lib/service_cleaner'
 
-params = {}
+params = {
+  host: URI.parse('unix:///var/run/docker.sock'),
+  threshold: Time.at(0),
+  'exclude-names': []
+}
 
 OptionParser.new do |opts|
   opts.banner = "Removes old (after time threshold) docker swarm services. \nUsage: services [options]"
-  opts.on("--threshold=[TIME]", Chronic, '(required) Relative time threshold, example: "2 days ago"')
-  opts.on("--destructive", "Run in destructive mode")
-  opts.on("--host=[URI|SOCKET]", "Remote docker uri (http://...) or local socket (unix://...), default: unix:///var/run/docker.sock")
-  opts.on("--exclude-names=[STRING,STRING]", Array, "Exclude name from deletion process")
+  opts.on("--destructive", "Run in destructive mode (show only without this key)")
+  opts.on("--threshold=[TIME]", Chronic, 'Relative time threshold, example: "2 days ago", default: "0 seconds ago"')
+  opts.on("--host=[URI]", URI, "Remote docker uri (http://...) or local socket (unix://...), default: unix:///var/run/docker.sock")
+  opts.on("--exclude-names=[STRING,STRING,...]", Array, "Exclude name from deletion process")
 end.parse!(into: params)
 
-params[:host] ||= 'unix:///var/run/docker.sock'
-unless params.key?(:threshold)
-  puts "--threshold=[TIME] was missed"
-  exit
-end
-
-puts "Connect to #{params[:host]}"
-
-uri = URI.parse(params[:host])
-connection =
-  if 'unix' == uri.scheme
-    if File.exists?(uri.path)
-      Excon.new('unix:///', :socket => uri.path)
-    else
-      fail("#{params[:host]} not exists on host")
-    end
-  else
-    Excon.new(uri.to_s)
-  end
-
-response = connection.get(path: '/services')
-response_body = JSON.parse(response.body)
-unless 200 == response.status
-  puts "#{response.status} #{response_body['message']}"
-  exit
-end
-
-data = response_body.map do |hash|
-  {
-    ID: hash['ID'],
-    Name: hash['Spec']['Name'],
-    CreatedAt: Time.parse(hash['CreatedAt']),
-    UpdatedAt: Time.parse(hash['UpdatedAt'])
-  }
-end
-
-name_max_length = data.map { |hash| hash[:Name] }.map(&:size).max
-
-data.sort! { |a, b| a[:Name] <=> b[:Name] }
-
-data.each do |service|
-  action = if service[:CreatedAt] < params[:threshold] && !params[:'exclude-names'].include?(service[:Name])
-    :deleted
-  else
-    :kept
-  end
-
-  puts "#{service[:ID]}  #{service[:Name].ljust(name_max_length, ' ')}  #{service[:CreatedAt]}  #{action}"
-
-  puts "---params[:destructive]=#{params[:destructive].inspect}"
-
-  if :deleted == action && params[:destructive]
-    response = connection.delete(path: "/services/#{service['ID']}")
-    response_body = JSON.parse(response.body)
-    unless 200 == response.status
-      puts "#{response.status} #{response_body['message']}"
-      exit
-    end
-  end
-end
+sc = ServiceCleaner.new(**params)
+sc.delete_services(sc.get_services)
