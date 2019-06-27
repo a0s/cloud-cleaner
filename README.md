@@ -27,7 +27,7 @@ and then real deletion
 ```
 
 In case you want temporary remote connection to `/var/run/docker.sock`  from other host (eg. local machine) you can use 
-`socat` (described in [Forwarding TCP-traffic to a UNIX socket](https://coderwall.com/p/c3wyzq/forwarding-tcp-traffic-to-a-unix-socket))
+`socat` (described in [Forwarding TCP-traffic to a UNIX socket](https://coderwall.com/p/c3wyzq/forwarding-tcp-traffic-to-a-unix-socket)).
 For example, for remote port 11111
 
 ```bash
