@@ -33,3 +33,7 @@ For example, for remote port 11111
 ```bash
 ./services --host="http://remote-swarm-host:11111" --threshold="2 days ago" --exclude-names="registrator" --destructive
 ```
+
+## TODO
+* Periodical running without cron
+* Image cleaner by [age, count].[min,max] conditions
