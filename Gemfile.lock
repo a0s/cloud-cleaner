@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     chronic (0.10.2)
-    excon (0.64.0)
+    excon (0.71.0)
 
 PLATFORMS
   ruby
